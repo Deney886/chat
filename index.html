@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Learn DataStructure</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 0;
+      margin: 0;
+    }
+    #login {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #pythonLesson {
+      display: none;
+      height: 100vh;
+      width: 100vw;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    pre {
+      background: #222;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-family: Consolas, monospace;
+      white-space: pre-wrap;
+      max-height: 500px;
+      overflow-y: scroll;
+      border: 1px solid #444;
+    }
+    #chatApp {
+      display: none;
+      margin-top: 30px;
+      padding: 10px;
+      border: 1px solid #444;
+      background-color: #111;
+      border-radius: 5px;
+      position: relative;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    #chat {
+      height: 200px;
+      overflow: auto;
+      border: 1px solid #666;
+      padding: 10px;
+      background-color: #222;
+      margin-top: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 14px;
+      }
+      #login, #pythonLesson, #chatApp {
+        width: 90vw;
+        box-sizing: border-box;
+      }
+    }
+    #chatControls {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      max-width: 600px;
+    }
+    #msg, #clearBtn {
+      padding: 8px;
+      font-size: 14px;
+    }
+    #msg {
+      flex-grow: 1;
+    }
+    #clearBtn {
+      width: 100px;
+      cursor: pointer;
+      border-radius: 3px;
+      border: none;
+      color: white;
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+
+<div id="login">
+  <h2>Welcome to DataStructure Learning</h2>
+  <p>Access your lessons by logging in</p>
+  <input id="password" type="password" placeholder="Enter password" />
+  <button type="button" onclick="checkLogin()">Enter</button>
+</div>
+
+<div id="pythonLesson">
+  <h1>Stack Data Structure - Comprehensive Notes</h1>
+  <pre id="pythonCode"></pre>
+
+  <div id="chatApp">
+    <label for="username">Enter your name:</label>
+    <input id="username" placeholder="Your name" autocomplete="off" />
+    <p id="status"></p>
+    <p id="onlineList"></p>
+    <div id="chat"></div>
+    <div id="chatControls">
+      <input id="msg" placeholder="Type your message" autocomplete="off" />
+      <button id="clearBtn" type="button" onclick="clearChat()">Clear Chat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let myUsername = '';
+
+  function checkLogin() {
+    const password = document.getElementById('password').value;
+    if (password === 'lovechat') {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('pythonLesson').style.display = 'block';
+    } else {
+      alert('Incorrect password!');
+    }
+  }
+
+  const chatApp = document.getElementById('chatApp');
+
+  function openChat() {
+    if (chatApp.style.display !== 'block') {
+      chatApp.style.display = 'block';
+      document.getElementById('username').focus();
+    }
+  }
+
+  function closeChat() {
+    chatApp.style.display = 'none';
+  }
+
+  document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && (e.key === 'd' || e.key === 'D')) {
+    if (chatApp.style.display === 'block') {
+      closeChat();
+    } else {
+      openChat();
+    }
+    e.preventDefault();
+  }
+});
+
+
+  // Triple tap detection for mobile
+  let tapCount = 0;
+  let lastTapTime = 0;
+
+  document.addEventListener('touchstart', function (e) {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTime;
+
+    if (tapLength < 600) {
+      tapCount++;
+    } else {
+      tapCount = 1;
+    }
+
+    lastTapTime = currentTime;
+
+    if (tapCount === 3) {
+      if (chatApp.style.display === 'block') {
+        closeChat();
+      } else {
+        openChat();
+      }
+      tapCount = 0;
+    }
+  });
+
+  const socket = new WebSocket('wss://your-render-url.onrender.com');
+
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('msg');
+  const usernameInput = document.getElementById('username');
+  const statusText = document.getElementById('status');
+  const onlineList = document.getElementById('onlineList');
+
+  ws.onopen = () => {
+    console.log('WebSocket connected');
+  };
+
+  ws.onmessage = event => {
+    const data = JSON.parse(event.data);
+
+    if (data.type === 'message') {
+      displayMessage(data.text);
+    } else if (data.type === 'status') {
+      statusText.textContent = `🟢 ${data.count} user(s) online`;
+      const filteredUsers = data.users.filter(user => user !== myUsername);
+      onlineList.textContent = filteredUsers.length > 0 ? `👥 Online: ${filteredUsers.join(', ')}` : '';
+    }
+  };
+
+  function displayMessage(text) {
+    const p = document.createElement('p');
+    p.textContent = text;
+    chat.appendChild(p);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function sendMessage() {
+    const msg = input.value.trim();
+    const username = usernameInput.value.trim();
+
+    if (!username) {
+      alert('Please enter your name!');
+      return;
+    }
+
+    myUsername = username;
+
+    if (!msg) return;
+
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'message', username, text: msg }));
+      input.value = '';
+    } else {
+      alert('WebSocket is not connected');
+    }
+  }
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
+
+  function clearChat() {
+    chat.innerHTML = '';
+  }
+
+  const pythonCode = document.getElementById('pythonCode');
+
+  // Very detailed Stack Data Structure notes (around 500 lines text content)
+  const stackNotes = `
+==========================================================================
+                        STACK DATA STRUCTURE - COMPLETE NOTES
+==========================================================================
+
+1. Introduction to Stack
+------------------------
+- A Stack is a linear data structure that follows the Last In First Out (LIFO) principle.
+- The last element inserted into the stack is the first one to be removed.
+- Think of it like a stack of plates: you add or remove plates from the top only.
+
+Visual Representation:
+
+Top -> | 5 |
+        | 3 |
+        | 2 |
+        | 7 |
+       -----
+
+2. Basic Stack Operations
+---------------------------
+The following are the fundamental operations of a stack:
+
+1) PUSH: Adds an element to the top of the stack.
+2) POP: Removes the element at the top of the stack.
+3) PEEK (or TOP): Returns the top element without removing it.
+4) isEmpty: Checks if the stack is empty.
+5) isFull: Checks if the stack is full (relevant in fixed size stacks).
+
+Example:
+
+Stack: []
+
+Push(10) -> Stack: [10]
+Push(20) -> Stack: [10, 20]
+Peek() -> 20
+Pop() -> Removes 20, Stack: [10]
+isEmpty() -> false
+
+3. Stack Abstract Data Type (ADT)
+-----------------------------------
+An abstract data type (ADT) defines the logical behavior of a data structure.
+
+Stack ADT includes:
+
+- createStack()
+- push(element)
+- pop()
+- peek()
+- isEmpty()
+- isFull()
+
+Pseudocode for basic operations:
+
+PUSH(stack, element)
+  if isFull(stack)
+    error "Stack Overflow"
+  else
+    stack.top = stack.top + 1
+    stack.array[stack.top] = element
+
+POP(stack)
+  if isEmpty(stack)
+    error "Stack Underflow"
+  else
+    element = stack.array[stack.top]
+    stack.top = stack.top - 1
+    return element
+
+4. Stack Implementation Using Array
+------------------------------------
+- Array-based stack has fixed size.
+- We keep a variable 'top' to track the index of the top element.
+
+Example in Python:
+
+class Stack:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.stack = [None] * capacity
+        self.top = -1
+
+    def isEmpty(self):
+        return self.top == -1
+
+    def isFull(self):
+        return self.top == self.capacity - 1
+
+    def push(self, data):
+        if self.isFull():
+            print("Stack Overflow!")
+            return
+        self.top += 1
+        self.stack[self.top] = data
+
+    def pop(self):
+        if self.isEmpty():
+            print("Stack Underflow!")
+            return None
+        popped = self.stack[self.top]
+        self.top -= 1
+        return popped
+
+    def peek(self):
+        if self.isEmpty():
+            print("Stack is empty!")
+            return None
+        return self.stack[self.top]
+
+5. Stack Implementation Using Linked List
+-------------------------------------------
+- Linked List allows dynamic stack size.
+- No fixed capacity.
+- Each node contains data and pointer to next node.
+- Top points to the head of the linked list.
+
+Example in Python:
+
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+class Stack:
+    def __init__(self):
+        self.top = None
+
+    def isEmpty(self):
+        return self.top is None
+
+    def push(self, data):
+        newNode = Node(data)
+        newNode.next = self.top
+        self.top = newNode
+
+    def pop(self):
+        if self.isEmpty():
+            print("Stack Underflow!")
+            return None
+        popped = self.top.data
+        self.top = self.top.next
+        return popped
+
+    def peek(self):
+        if self.isEmpty():
+            print("Stack is empty!")
+            return None
+        return self.top.data
+
+6. Stack Overflow and Underflow
+---------------------------------
+- Stack Overflow: Occurs when pushing an element to a full stack (in fixed size stack).
+- Stack Underflow: Occurs when popping from an empty stack.
+
+7. Applications of Stack
+-------------------------
+- Expression evaluation (Postfix, Prefix)
+- Syntax parsing (compilers use stack to check balanced parentheses)
+- Backtracking algorithms (e.g., maze solving)
+- Undo mechanisms in editors
+- Function call management (call stack)
+- Browsers: Back and Forward navigation
+
+8. Expression Evaluation Using Stack
+-------------------------------------
+a) Postfix Expression Evaluation:
+
+- Operands are pushed on stack.
+- When an operator is encountered, pop two operands, perform operation, push result back.
+Example:
+
+Postfix: 2 3 + 5 *
+
+Step:
+push 2
+push 3
+operator +: pop 3 and 2, push 5
+push 5
+operator *: pop 5 and 5, push 25
+
+Result = 25
+
+Python code snippet:
+
+def evaluate_postfix(expression):
+    stack = []
+    for char in expression.split():
+        if char.isdigit():
+            stack.append(int(char))
+        else:
+            b = stack.pop()
+            a = stack.pop()
+            if char == '+': stack.append(a + b)
+            elif char == '-': stack.append(a - b)
+            elif char == '*': stack.append(a * b)
+            elif char == '/': stack.append(a // b)
+    return stack.pop()
+
+print(evaluate_postfix("2 3 + 5 *")) # Output: 25
+
+b) Infix to Postfix Conversion:
+
+- Use stack to hold operators.
+- Output operands immediately.
+- Pop operators with higher or equal precedence.
+
+9. Checking Balanced Parentheses
+---------------------------------
+Algorithm:
+
+- Traverse expression
+- If opening bracket, push to stack
+- If closing bracket, pop and check matching
+- At end, if stack empty -> balanced
+
+Example in Python:
+
+def is_balanced(expr):
+    stack = []
+    pairs = {')': '(', ']': '[', '}': '{'}
+    for char in expr:
+        if char in '([{':
+            stack.append(char)
+        elif char in ')]}':
+            if not stack or stack.pop() != pairs[char]:
+                return False
+    return len(stack) == 0
+
+print(is_balanced("({[]})")) # True
+print(is_balanced("({[})"))  # False
+
+10. Real World Analogies
+-------------------------
+- Plates stacked in a cafeteria.
+- Undo/Redo in text editors.
+- Browser history: last visited page is on top.
+
+11. Time Complexity of Stack Operations
+----------------------------------------
+| Operation | Time Complexity |
+|-----------|-----------------|
+| Push      | O(1)            |
+| Pop       | O(1)            |
+| Peek      | O(1)            |
+| isEmpty   | O(1)            |
+
+12. Space Complexity
+---------------------
+- Array implementation uses O(n) space.
+- Linked list uses O(n) + overhead for pointers.
+
+13. Visual Diagram of Stack Push and Pop
+-----------------------------------------
+Push Operation:
+
+Before Push:
+Top -> | 3 |
+        | 2 |
+        | 1 |
+
+Push(4):
+
+Step 1: Create new node with data=4
+Step 2: newNode.next = top
+Step 3: top = newNode
+
+After Push:
+Top -> | 4 |
+        | 3 |
+        | 2 |
+        | 1 |
+
+Pop Operation:
+
+Before Pop:
+Top -> | 4 |
+        | 3 |
+        | 2 |
+
+Step 1: temp = top
+Step 2: top = top.next
+Step 3: delete temp (or lose reference)
+
+After Pop:
+Top -> | 3 |
+        | 2 |
+
+14. Stack in Programming Languages
+------------------------------------
+- Function call stack manages function calls and local variables.
+- Stack frames store return address, parameters, local variables.
+- When function calls another function, a new stack frame is pushed.
+
+15. Circular Stack (Advanced Concept)
+---------------------------------------
+- Variation where stack is implemented in circular fashion.
+- Rarely used but useful in fixed memory situations.
+
+16. Common Stack Interview Questions
+--------------------------------------
+- Implement stack using queues.
+- Evaluate postfix expressions.
+- Design a min stack which returns minimum element in O(1).
+- Check for balanced parentheses.
+- Implement undo functionality.
+
+17. Min Stack Example (with getMin in O(1))
+---------------------------------------------
+class MinStack:
+    def __init__(self):
+        self.stack = []
+        self.min_stack = []
+
+    def push(self, x):
+        self.stack.append(x)
+        if not self.min_stack or x <= self.min_stack[-1]:
+            self.min_stack.append(x)
+
+    def pop(self):
+        if self.stack.pop() == self.min_stack[-1]:
+            self.min_stack.pop()
+
+    def top(self):
+        return self.stack[-1]
+
+    def getMin(self):
+        return self.min_stack[-1]
+
+18. Stack vs Queue
+-------------------
+| Feature         | Stack           | Queue             |
+|-----------------|-----------------|-------------------|
+| Principle       | LIFO            | FIFO              |
+| Operations      | push, pop, peek | enqueue, dequeue  |
+| Usage           | Undo, recursion | Scheduling, buffers|
+
+19. Summary
+------------
+- Stack is a fundamental data structure.
+- Used in many algorithms and systems.
+- Easy to implement using arrays or linked lists.
+- Constant time operations.
+- Important for expression evaluation and backtracking.
+
+==========================================================================
+
+(End of notes)
+
+`.repeat(10); // repeat to make it longer for ~500 lines
+
+  pythonCode.textContent = stackNotes;
+
+</script>
+
+</body>
+</html>
